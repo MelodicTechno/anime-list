@@ -8,6 +8,9 @@ import (
 
 	"github.com/MelodicTechno/anime-list/internal/config"
 	"github.com/MelodicTechno/anime-list/internal/database"
+	"github.com/MelodicTechno/anime-list/internal/handler"
+	"github.com/MelodicTechno/anime-list/internal/repository"
+	"github.com/MelodicTechno/anime-list/internal/service"
 )
 
 func main() {
@@ -31,8 +34,18 @@ func main() {
 	_ = db
 	_ = rdb
 
+	userRepo := repository.NewUserRepository(db)
+	userSvc := service.NewUserService(userRepo, cfg.JWT.Secret, cfg.JWT.ExpireHours)
+	userHandler := handler.NewUserHandler(userSvc)
+
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
+
+	api := r.Group("/api")
+	{
+		api.POST("/register", userHandler.Register)
+		api.POST("/login", userHandler.Login)
+	}
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	log.Printf("starting server on %s", addr)
