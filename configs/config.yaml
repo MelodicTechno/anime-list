@@ -16,4 +16,5 @@ redis:
 
 jwt:
   secret: "change-me-in-production"
-  expire_hours: 72
+  access_expire_hours: 2
+  refresh_expire_hours: 720

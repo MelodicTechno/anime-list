@@ -32,10 +32,9 @@ func main() {
 	log.Println("connected to redis")
 
 	_ = db
-	_ = rdb
 
 	userRepo := repository.NewUserRepository(db)
-	userSvc := service.NewUserService(userRepo, cfg.JWT.Secret, cfg.JWT.ExpireHours)
+	userSvc := service.NewUserService(userRepo, rdb, cfg.JWT.Secret, cfg.JWT.AccessExpireHours, cfg.JWT.RefreshExpireHours)
 	userHandler := handler.NewUserHandler(userSvc)
 
 	r := gin.Default()
@@ -45,6 +44,13 @@ func main() {
 	{
 		api.POST("/register", userHandler.Register)
 		api.POST("/login", userHandler.Login)
+		api.POST("/refresh", userHandler.Refresh)
+
+		auth := api.Group("")
+		auth.Use(handler.AuthMiddleware(cfg.JWT.Secret))
+		{
+			auth.GET("/me", userHandler.Me)
+		}
 	}
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)

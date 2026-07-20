@@ -1,11 +1,14 @@
 package service
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/MelodicTechno/anime-list/internal/model"
@@ -13,24 +16,29 @@ import (
 )
 
 var (
-	ErrUsernameTaken     = errors.New("username already exists")
-	ErrEmailTaken        = errors.New("email already exists")
-	ErrInvalidCredential = errors.New("invalid username or password")
-	ErrWeakPassword      = errors.New("password must be at least 6 characters")
-	ErrInvalidEmail      = errors.New("invalid email format")
+	ErrUsernameTaken      = errors.New("username already exists")
+	ErrEmailTaken         = errors.New("email already exists")
+	ErrInvalidCredential  = errors.New("invalid username or password")
+	ErrWeakPassword       = errors.New("password must be at least 6 characters")
+	ErrInvalidEmail       = errors.New("invalid email format")
+	ErrInvalidRefreshToken = errors.New("invalid or expired refresh token")
 )
 
 type UserService struct {
-	repo       *repository.UserRepository
-	jwtSecret  []byte
-	jwtExpire  time.Duration
+	repo              *repository.UserRepository
+	rdb               *redis.Client
+	jwtSecret         []byte
+	accessExpireHours int
+	refreshExpireHours int
 }
 
-func NewUserService(repo *repository.UserRepository, jwtSecret string, expireHours int) *UserService {
+func NewUserService(repo *repository.UserRepository, rdb *redis.Client, jwtSecret string, accessHours, refreshHours int) *UserService {
 	return &UserService{
-		repo:      repo,
-		jwtSecret: []byte(jwtSecret),
-		jwtExpire: time.Duration(expireHours) * time.Hour,
+		repo:              repo,
+		rdb:               rdb,
+		jwtSecret:         []byte(jwtSecret),
+		accessExpireHours: accessHours,
+		refreshExpireHours: refreshHours,
 	}
 }
 
@@ -81,37 +89,103 @@ func (s *UserService) Register(username, email, password string) (*model.User, e
 	return user, nil
 }
 
-func (s *UserService) Login(account, password string) (string, *model.User, error) {
+func (s *UserService) Login(account, password string) (string, string, *model.User, error) {
 	account = strings.TrimSpace(account)
 	if account == "" || password == "" {
-		return "", nil, ErrInvalidCredential
+		return "", "", nil, ErrInvalidCredential
 	}
 
 	user, err := s.repo.FindByUsernameOrEmail(account)
 	if err != nil {
-		return "", nil, err
+		return "", "", nil, err
 	}
 	if user == nil {
-		return "", nil, ErrInvalidCredential
+		return "", "", nil, ErrInvalidCredential
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		return "", nil, ErrInvalidCredential
+		return "", "", nil, ErrInvalidCredential
 	}
 
-	token, err := s.generateToken(user.ID)
+	accessToken, err := s.generateAccessToken(user.ID)
 	if err != nil {
-		return "", nil, err
+		return "", "", nil, err
 	}
 
-	return token, user, nil
+	refreshToken, err := s.generateRefreshToken(user.ID)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	return accessToken, refreshToken, user, nil
 }
 
-func (s *UserService) generateToken(userID int64) (string, error) {
+func (s *UserService) RefreshToken(refreshToken string) (string, error) {
+	token, err := jwt.Parse(refreshToken, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
+		return s.jwtSecret, nil
+	})
+	if err != nil {
+		return "", ErrInvalidRefreshToken
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return "", ErrInvalidRefreshToken
+	}
+
+	tokenType, _ := claims["type"].(string)
+	if tokenType != "refresh" {
+		return "", ErrInvalidRefreshToken
+	}
+
+	userIDFloat, ok := claims["userId"].(float64)
+	if !ok {
+		return "", ErrInvalidRefreshToken
+	}
+	userID := int64(userIDFloat)
+
+	redisKey := fmt.Sprintf("refresh:%d", userID)
+	stored, err := s.rdb.Get(context.Background(), redisKey).Result()
+	if errors.Is(err, redis.Nil) || stored != refreshToken {
+		return "", ErrInvalidRefreshToken
+	}
+	if err != nil {
+		return "", err
+	}
+
+	return s.generateAccessToken(userID)
+}
+
+func (s *UserService) generateAccessToken(userID int64) (string, error) {
 	claims := jwt.MapClaims{
 		"userId": userID,
-		"exp":    time.Now().Add(s.jwtExpire).Unix(),
+		"type":   "access",
+		"exp":    time.Now().Add(time.Duration(s.accessExpireHours) * time.Hour).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(s.jwtSecret)
+}
+
+func (s *UserService) generateRefreshToken(userID int64) (string, error) {
+	claims := jwt.MapClaims{
+		"userId": userID,
+		"type":   "refresh",
+		"exp":    time.Now().Add(time.Duration(s.refreshExpireHours) * time.Hour).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signed, err := token.SignedString(s.jwtSecret)
+	if err != nil {
+		return "", err
+	}
+
+	redisKey := fmt.Sprintf("refresh:%d", userID)
+	expire := time.Duration(s.refreshExpireHours) * time.Hour
+	if err := s.rdb.Set(context.Background(), redisKey, signed, expire).Err(); err != nil {
+		return "", err
+	}
+
+	return signed, nil
 }
