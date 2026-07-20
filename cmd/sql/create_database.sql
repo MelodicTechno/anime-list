@@ -1,4 +1,22 @@
+-- 使用说明:
+--   psql -U postgres -f cmd/sql/create_database.sql   (首次运行，需先连接 postgres 库)
+--   psql -U postgres -d anime_list -f cmd/sql/create_database.sql  (已有 anime_list 库时重建表)
+
+drop database if exists anime_list;
 create database anime_list;
+
+\c anime_list
+
+drop table if exists watch_plans      cascade;
+drop table if exists anime_categories cascade;
+drop table if exists favorite_items   cascade;
+drop table if exists bookshelf_items  cascade;
+drop table if exists comments         cascade;
+drop table if exists favorites        cascade;
+drop table if exists bookshelves      cascade;
+drop table if exists categories       cascade;
+drop table if exists anime            cascade;
+drop table if exists users            cascade;
 
 create table users (
     id           bigserial primary key,
@@ -48,8 +66,7 @@ create table bookshelf_items (
     anime_id     bigint not null references anime(id) on delete cascade,
     unique(bookshelf_id, anime_id)
 );
-create index idx_bookshelf_items_bookshelf on bookshelf_items(bookshelf_id);
-create index idx_bookshelf_items_anime     on bookshelf_items(anime_id);
+create index idx_bookshelf_items_anime on bookshelf_items(anime_id);
 
 create table favorites (
     id         bigserial primary key,
@@ -65,8 +82,7 @@ create table favorite_items (
     anime_id    bigint not null references anime(id) on delete cascade,
     unique(favorite_id, anime_id)
 );
-create index idx_favorite_items_favorite on favorite_items(favorite_id);
-create index idx_favorite_items_anime    on favorite_items(anime_id);
+create index idx_favorite_items_anime on favorite_items(anime_id);
 
 create table anime_categories (
     anime_id    bigint not null references anime(id) on delete cascade,
@@ -86,5 +102,4 @@ create table watch_plans (
     unique(user_id, anime_id),
     constraint chk_watch_plan_status check (status in ('planned', 'watching', 'completed', 'dropped'))
 );
-create index idx_watch_plans_user  on watch_plans(user_id);
 create index idx_watch_plans_anime on watch_plans(anime_id);
