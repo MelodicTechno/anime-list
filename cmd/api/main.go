@@ -32,6 +32,7 @@ func main() {
 	_ = rdb
 
 	r := gin.Default()
+	r.SetTrustedProxies(nil)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	log.Printf("starting server on %s", addr)
