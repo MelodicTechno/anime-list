@@ -30,25 +30,14 @@ configs/config.yaml     → YAML config file
 - No explicit column tags — Gorm auto-infers snake_case from field names (`AnimeID` → `anime_id`)
 - All models in `internal/model/` with `package model`
 
-## Model conventions
-
-- IDs use `int64`, timestamps use `time.Time`
-- JSON tags: camelCase (`animeId`, `createdAt`)
-- DB column tags: snake_case (`anime_id`, `created_at`)
-- All models in `internal/model/` with `package model`
-
 ## Build commands
 
 ```
-make build             → go build -o bin/api.exe ./cmd/api/
+make build             → go build -o bin/anime-list-server.exe ./cmd/api/
 make run               → go run ./cmd/api/
 ./scripts/build.ps1    → PowerShell build script
 bash scripts/build.sh  → bash build script
 ```
-
-## Current state
-
-Early-stage project. Only model structs exist (`internal/model/anime.go`, `comment.go`). All other layers are empty directories. No build/test/lint commands are configured yet (Makefile is empty, no CI).
 
 ## Existing instruction files
 

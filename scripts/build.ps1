@@ -1,6 +1,6 @@
 # Build script for Windows
 param(
-    [string]$Output = "bin/api.exe"
+    [string]$Output = "bin/anime-list-server.exe"
 )
 
 $ErrorActionPreference = "Stop"

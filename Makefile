@@ -1,5 +1,5 @@
 build:
-	go build -o bin/api.exe ./cmd/api/
+	go build -o bin/anime-list-server.exe ./cmd/api/
 
 run:
 	go run ./cmd/api/
