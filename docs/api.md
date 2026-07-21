@@ -66,5 +66,6 @@ Header: `Authorization: Bearer <accessToken>`
 ### POST /api/bookshelves/:id/items
 
 ```json
-{"animeId": 1}
+{"animeId": 1, "stateId": 2}
 ```
+`stateId` 可选：1 想看、2 在看、3 已看、4 弃了。

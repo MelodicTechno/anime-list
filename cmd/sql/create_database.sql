@@ -17,6 +17,7 @@ drop table if exists bookshelves      cascade;
 drop table if exists categories       cascade;
 drop table if exists anime            cascade;
 drop table if exists users            cascade;
+drop table if exists states           cascade;
 
 create table users (
     id           bigserial primary key,
@@ -28,12 +29,24 @@ create table users (
     updated_at   timestamp    not null default now()
 );
 
+create table states (
+    id   integer primary key,
+    name varchar(32) not null unique
+);
+insert into states (id, name) values
+    (1, '想看'),
+    (2, '在看'),
+    (3, '已看'),
+    (4, '弃了');
+
 create table anime (
-    id           bigserial primary key,
-    title        varchar(256) not null,
-    release_date date,
-    score        numeric(3,1) not null default 0,
-    constraint chk_score_range check (score >= 0 and score <= 10)
+    id            bigserial primary key,
+    title         varchar(256) not null,
+    release_date  date,
+    score         numeric(3,1) not null default 0,
+    airing_status varchar(16)  not null default 'upcoming',
+    constraint chk_score_range        check (score >= 0 and score <= 10),
+    constraint chk_airing_status      check (airing_status in ('airing', 'finished', 'upcoming'))
 );
 
 create table categories (
@@ -64,6 +77,7 @@ create table bookshelf_items (
     id           bigserial primary key,
     bookshelf_id bigint not null references bookshelves(id) on delete cascade,
     anime_id     bigint not null references anime(id) on delete cascade,
+    state_id     integer references states(id) on delete set null,
     unique(bookshelf_id, anime_id)
 );
 create index idx_bookshelf_items_anime on bookshelf_items(anime_id);
@@ -95,11 +109,10 @@ create table watch_plans (
     id         bigserial primary key,
     user_id    bigint    not null references users(id) on delete cascade,
     anime_id   bigint    not null references anime(id) on delete cascade,
-    status     varchar(16) not null default 'planned',
+    state_id   integer   not null default 1 references states(id),
     notes      text      not null default '',
     created_at timestamp not null default now(),
     updated_at timestamp not null default now(),
-    unique(user_id, anime_id),
-    constraint chk_watch_plan_status check (status in ('planned', 'watching', 'completed', 'dropped'))
+    unique(user_id, anime_id)
 );
 create index idx_watch_plans_anime on watch_plans(anime_id);

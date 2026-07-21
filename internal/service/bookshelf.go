@@ -91,7 +91,7 @@ func (s *BookshelfService) Delete(userID, id int64) error {
 	return s.repo.Delete(id)
 }
 
-func (s *BookshelfService) AddItem(userID, bookshelfID, animeID int64) (*model.BookshelfItem, error) {
+func (s *BookshelfService) AddItem(userID, bookshelfID, animeID int64, stateID *int64) (*model.BookshelfItem, error) {
 	bs, err := s.repo.FindByID(bookshelfID)
 	if err != nil {
 		return nil, err
@@ -114,6 +114,7 @@ func (s *BookshelfService) AddItem(userID, bookshelfID, animeID int64) (*model.B
 	item := &model.BookshelfItem{
 		BookshelfID: bookshelfID,
 		AnimeID:     animeID,
+		StateID:     stateID,
 	}
 	if err := s.repo.AddItem(item); err != nil {
 		return nil, err

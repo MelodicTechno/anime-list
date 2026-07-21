@@ -165,7 +165,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"animeId\": 1\n}"
+              "raw": "{\n  \"animeId\": 1,\n  \"stateId\": 2\n}"
             }
           }
         },

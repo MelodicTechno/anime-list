@@ -27,7 +27,8 @@ type updateBookshelfRequest struct {
 }
 
 type addItemRequest struct {
-	AnimeID int64 `json:"animeId" binding:"required"`
+	AnimeID int64  `json:"animeId" binding:"required"`
+	StateID *int64 `json:"stateId"`
 }
 
 type bookshelfResponse struct {
@@ -87,13 +88,14 @@ func (h *BookshelfHandler) Get(c *gin.Context) {
 	}
 
 	type itemResponse struct {
-		ID      int64 `json:"id"`
-		AnimeID int64 `json:"animeId"`
+		ID      int64  `json:"id"`
+		AnimeID int64  `json:"animeId"`
+		StateID *int64 `json:"stateId"`
 	}
 
 	itemList := make([]itemResponse, len(items))
 	for i, it := range items {
-		itemList[i] = itemResponse{ID: it.ID, AnimeID: it.AnimeID}
+		itemList[i] = itemResponse{ID: it.ID, AnimeID: it.AnimeID, StateID: it.StateID}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -157,7 +159,7 @@ func (h *BookshelfHandler) AddItem(c *gin.Context) {
 		return
 	}
 
-	item, err := h.svc.AddItem(userID, bookshelfID, req.AnimeID)
+	item, err := h.svc.AddItem(userID, bookshelfID, req.AnimeID, req.StateID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -168,6 +170,7 @@ func (h *BookshelfHandler) AddItem(c *gin.Context) {
 			"id":          item.ID,
 			"bookshelfId": item.BookshelfID,
 			"animeId":     item.AnimeID,
+			"stateId":     item.StateID,
 		},
 	})
 }

@@ -10,7 +10,8 @@ type Bookshelf struct {
 }
 
 type BookshelfItem struct {
-	ID          int64 `json:"id"`
-	BookshelfID int64 `json:"bookshelfId"`
-	AnimeID     int64 `json:"animeId"`
+	ID          int64  `json:"id"`
+	BookshelfID int64  `json:"bookshelfId"`
+	AnimeID     int64  `json:"animeId"`
+	StateID     *int64 `json:"stateId"`
 }
