@@ -90,6 +90,96 @@
           }
         }
       ]
+    },
+    {
+      "name": "Bookshelf",
+      "item": [
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/bookshelves",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"正在追\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/bookshelves",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ]
+          }
+        },
+        {
+          "name": "Get",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/bookshelves/1",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ]
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/bookshelves/1",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"已看完\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/bookshelves/1",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ]
+          }
+        },
+        {
+          "name": "Add Item",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/bookshelves/1/items",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"animeId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Remove Item",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/bookshelves/1/items/1",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ]
+          }
+        }
+      ]
     }
   ]
 }

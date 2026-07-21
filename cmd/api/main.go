@@ -37,6 +37,10 @@ func main() {
 	userSvc := service.NewUserService(userRepo, rdb, cfg.JWT.Secret, cfg.JWT.AccessExpireHours, cfg.JWT.RefreshExpireHours)
 	userHandler := handler.NewUserHandler(userSvc)
 
+	bookshelfRepo := repository.NewBookshelfRepository(db)
+	bookshelfSvc := service.NewBookshelfService(bookshelfRepo)
+	bookshelfHandler := handler.NewBookshelfHandler(bookshelfSvc)
+
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
 
@@ -50,6 +54,14 @@ func main() {
 		auth.Use(handler.AuthMiddleware(cfg.JWT.Secret))
 		{
 			auth.GET("/me", userHandler.Me)
+
+			auth.POST("/bookshelves", bookshelfHandler.Create)
+			auth.GET("/bookshelves", bookshelfHandler.List)
+			auth.GET("/bookshelves/:id", bookshelfHandler.Get)
+			auth.PUT("/bookshelves/:id", bookshelfHandler.Update)
+			auth.DELETE("/bookshelves/:id", bookshelfHandler.Delete)
+			auth.POST("/bookshelves/:id/items", bookshelfHandler.AddItem)
+			auth.DELETE("/bookshelves/:id/items/:itemId", bookshelfHandler.RemoveItem)
 		}
 	}
 

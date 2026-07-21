@@ -42,3 +42,29 @@ Base URL: `http://localhost:8080`
 ### GET /api/me
 
 Header: `Authorization: Bearer <accessToken>`
+
+## 书架
+
+所有接口需要 Bearer access_token。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST | `/api/bookshelves` | 创建书架 |
+| GET | `/api/bookshelves` | 获取用户的所有书架 |
+| GET | `/api/bookshelves/:id` | 获取单个书架（含作品列表） |
+| PUT | `/api/bookshelves/:id` | 修改书架名称 |
+| DELETE | `/api/bookshelves/:id` | 删除书架 |
+| POST | `/api/bookshelves/:id/items` | 添加作品到书架 |
+| DELETE | `/api/bookshelves/:id/items/:itemId` | 从书架移除作品 |
+
+### POST /api/bookshelves
+
+```json
+{"name": "正在追"}
+```
+
+### POST /api/bookshelves/:id/items
+
+```json
+{"animeId": 1}
+```
